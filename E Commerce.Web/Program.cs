@@ -31,8 +31,8 @@ namespace E_Commerce.Web
             var app = builder.Build();
 
             #region DataSeed - Apply Migration;
-            app.MigrateDatabase();
-            app.SeedDatabase();
+            app.MigrateDatabase()
+                .SeedDatabase();
 
             #endregion
 
