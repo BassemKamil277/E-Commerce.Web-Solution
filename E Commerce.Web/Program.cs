@@ -2,14 +2,19 @@
 using E_Commerce.Domain.Contracts;
 using E_Commerce.Persistence.Data.DataSeed;
 using E_Commerce.Persistence.Data.DbContexts;
+using E_Commerce.Persistence.Repositories;
+using E_Commerce.Services;
+using E_Commerce.Services.MappingProfile;
+using E_Commerce.Services_Abstraction;
 using E_Commerce.Web.Extentions;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace E_Commerce.Web
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -26,13 +31,21 @@ namespace E_Commerce.Web
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
             builder.Services.AddScoped<IDataIntializer, DataIntializer>();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            builder.Services.AddAutoMapper(x => x.AddProfile(new ProductProfile()));
+            builder.Services.AddAutoMapper(typeof(ServiceAssemblyReferences).Assembly);
+            //builder.Services.AddAutoMapper(x => x.LicenseKey = "", typeof(ProductProfile).Assembly); // kda h7l moshklt el license w kman msh kol m a3ml mapping l section aro7 a3mlo allow , bs el klam da fy akher version ll package
+
+            builder.Services.AddScoped<IProductService , ProductService>();
+            builder.Services.AddTransient<ProductPictureUrlResolver>();
             #endregion
 
             var app = builder.Build();
 
             #region DataSeed - Apply Migration;
-            app.MigrateDatabase()
-                .SeedDatabase();
+           await app.MigrateDatabaseAsync();
+           await app.SeedDatabaseAsync();
 
             #endregion
 
@@ -45,6 +58,7 @@ namespace E_Commerce.Web
                 app.UseSwaggerUI();
             }
 
+            app.UseStaticFiles(); //34an te2ra el photos ,  fe verion  bs lkn fe el last version msh b7tag aktbha 
             app.UseHttpsRedirection();
 
             app.MapControllers();

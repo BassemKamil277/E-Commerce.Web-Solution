@@ -20,40 +20,40 @@ namespace E_Commerce.Persistence.Data.DataSeed
         {
            _dbContext = dbContext;
         }
-        public void Intialize()
+        public async Task IntializeAsync()
         {
             try
             {
-                var HasProducts = _dbContext.Products.Any();
-                var HasBrands = _dbContext.ProductBrands.Any();
-                var HasType = _dbContext.ProductTypes.Any();
+                var HasProducts = await _dbContext.Products.AnyAsync();
+                var HasBrands = await _dbContext.ProductBrands.AnyAsync();
+                var HasType = await _dbContext.ProductTypes.AnyAsync();
 
                 if (HasProducts && HasBrands && HasType) return;
 
                 if (!HasBrands)
                 {
-                    SeedDataFromJson<ProductBrand, int>("brands.json", _dbContext.ProductBrands);
+                   await SeedDataFromJsonAsync<ProductBrand, int>("brands.json", _dbContext.ProductBrands);
                 }
                 if (!HasType)
                 {
-                    SeedDataFromJson<ProductType, int>("types.json", _dbContext.ProductTypes);
+                    await SeedDataFromJsonAsync<ProductType, int>("types.json", _dbContext.ProductTypes);
 
                 }
-                _dbContext.SaveChanges(); // lazm a3ml add abl lma a7ot data fy el Product 34an el schema 
+                await _dbContext.SaveChangesAsync(); // lazm a3ml add abl lma a7ot data fy el Product 34an el schema 
 
                 if (!HasBrands)
                 {
-                    SeedDataFromJson<Product, int>("products.json", _dbContext.Products);
+                    await SeedDataFromJsonAsync<Product, int>("products.json", _dbContext.Products);
                 }
-                _dbContext.SaveChanges();
-            }
+                await _dbContext.SaveChangesAsync();
+            } 
             catch(Exception ex)
             {
                 Console.WriteLine($"Data seed is failed : {ex}");
             }
         }
 
-        private void SeedDataFromJson<T , TKey>(string FileName , DbSet<T> dbset) where T : BaseEntity<TKey>
+        private async Task SeedDataFromJsonAsync<T , TKey>(string FileName , DbSet<T> dbset) where T : BaseEntity<TKey>
         {
             // C:\Users\Bassem\Downloads\Route\APIs\E Commerce.Web Solution\E Commerce.Persistence\Data\DataSeed\JSONFiles\brands.json
 
@@ -67,14 +67,14 @@ namespace E_Commerce.Persistence.Data.DataSeed
 
                 using var dataStreams = File.OpenRead(FilePath);
 
-                var data = JsonSerializer.Deserialize<List<T>>(dataStreams, new JsonSerializerOptions
+                var data = await JsonSerializer.DeserializeAsync<List<T>>(dataStreams, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
 
                 });
                 if(data is not null)
                 {
-                    dbset.AddRange(data);
+                   await dbset.AddRangeAsync(data);
                 }
             }
             catch (Exception ex) 
