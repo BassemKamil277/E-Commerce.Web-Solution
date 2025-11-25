@@ -1,4 +1,5 @@
-﻿using E_Commerce.Services_Abstraction;
+﻿using E_Commerce.Presentation.Attributes;
+using E_Commerce.Services_Abstraction;
 using E_Commerce.Shared;
 using E_Commerce.Shared.DTOs.ProductDTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace E_Commerce.Presentation.Controllers
         }
 
         [HttpGet]
+        [RedisChach]
         public async Task<ActionResult<PaginatedResult<ProductDTO>>> GetProducts([FromQuery]ProductsQueryParams queryParams)
         {
             var Products = await _productService.GetAlProductsAsync(queryParams);
@@ -32,8 +34,9 @@ namespace E_Commerce.Presentation.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductDTO>> GetProduct(int id)
         {
-            var Products = await _productService.GetProductByIdAsync(id);
-            return Ok(Products);
+                //throw new Exception();
+                var Product = await _productService.GetProductByIdAsync(id);
+                return Ok(Product);
         }
 
         [HttpGet("brands")]
