@@ -5,6 +5,7 @@ using E_Commerce.Services.Exceptions;
 using E_Commerce.Services.Specifications;
 using E_Commerce.Services_Abstraction;
 using E_Commerce.Shared;
+using E_Commerce.Shared.CommonResult;
 using E_Commerce.Shared.DTOs.ProductDTOs;
 using System;
 using System.Collections.Generic;
@@ -51,12 +52,13 @@ namespace E_Commerce.Services
             return new PaginatedResult<ProductDTO>(queryParams.PageIndex,CountOfDataToReturn, CountOfAllProducts, DataToReturn);
         }   
 
-        public async Task<ProductDTO> GetProductByIdAsync(int id)
+        public async Task<Result<ProductDTO>> GetProductByIdAsync(int id)
         {
             var Spec = new ProductWithTypeAndBrandSpecification(id);
             var Products = await _unitOfWork.GetRepository<Product , int>().GetByIdAsync(Spec);
-            if(Products == null)
-                throw new ProductNotFoundException(id);
+            if (Products == null)
+                return Error.NotFound("Product.NotFound" , $"Product With Id {id} Is Not Found");
+
             return _mapper.Map<ProductDTO>(Products);
         }
     }

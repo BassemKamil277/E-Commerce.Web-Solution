@@ -1,7 +1,10 @@
 
 using E_Commerce.Domain.Contracts;
+using E_Commerce.Domain.IdentityModule;
 using E_Commerce.Persistence.Data.DataSeed;
 using E_Commerce.Persistence.Data.DbContexts;
+using E_Commerce.Persistence.IdentityData.DataSeed;
+using E_Commerce.Persistence.IdentityData.DbContexts;
 using E_Commerce.Persistence.Repositories;
 using E_Commerce.Services;
 using E_Commerce.Services.MappingProfile;
@@ -9,6 +12,7 @@ using E_Commerce.Services_Abstraction;
 using E_Commerce.Web.CustomMiddleWare;
 using E_Commerce.Web.Extentions;
 using E_Commerce.Web.Factories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
@@ -34,7 +38,8 @@ namespace E_Commerce.Web
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
-            builder.Services.AddScoped<IDataIntializer, DataIntializer>();
+            builder.Services.AddKeyedScoped<IDataIntializer, DataIntializer>("Default");
+            builder.Services.AddKeyedScoped<IDataIntializer, IdentityDataIntialiaze>("Identity");
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             builder.Services.AddAutoMapper(x => x.AddProfile(new ProductProfile()));
@@ -51,6 +56,7 @@ namespace E_Commerce.Web
             builder.Services.AddScoped<IBasketService, BasketService>();
             builder.Services.AddScoped<ICacheRepository, CacheRepository>();
             builder.Services.AddScoped<ICacheSrevice, CacheSrevice>();
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 
             builder.Services.Configure<ApiBehaviorOptions>(options =>
@@ -58,13 +64,23 @@ namespace E_Commerce.Web
                 options.InvalidModelStateResponseFactory = ApiResponseFactory.GenerateApiValidationRespone;
             });
 
+            builder.Services.AddDbContext<StoreIdentityDbContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
+            });
+
+            builder.Services.AddIdentityCore<ApplicationUser>()
+                   .AddRoles<IdentityRole>()
+                   .AddEntityFrameworkStores<StoreIdentityDbContext>();
             #endregion
 
             var app = builder.Build();
 
             #region DataSeed - Apply Migration;
-           await app.MigrateDatabaseAsync();
-           await app.SeedDatabaseAsync();
+           await app.DatabaseMigrateAsync();
+           await app.DatabaseIdentityMigrateAsync();
+           await app.SeedDataAsync();
+           await app.SeedIdentityDatabaseAsync();
 
             #endregion
 
